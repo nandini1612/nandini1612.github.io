@@ -140,10 +140,10 @@
     bind("projectsFeatured").innerHTML = C.projects.featured
       .map((p, i) => {
         const links = (p.links || [])
-          .map(
-            (l) =>
-              `<a class="project__link" href="${esc(l.href)}" target="_blank" rel="noopener">${ICONS.code}${esc(l.label)}</a>`
-          )
+          .map((l) => {
+            const ic = /code|repo|github/i.test(l.label) ? ICONS.code : ICONS.external;
+            return `<a class="project__link" href="${esc(l.href)}" target="_blank" rel="noopener">${ic}${esc(l.label)}</a>`;
+          })
           .join("");
         const detail = [
           ["Problem", p.problem],
@@ -190,6 +190,31 @@
             .join("")}</div></div>`
       )
       .join("");
+
+    // Papers & preprints
+    const P = C.papers;
+    if (P && P.items && P.items.length) {
+      const pi = bind("papersIntro"); if (pi) pi.textContent = P.intro || "";
+      bind("papers").innerHTML = P.items
+        .map((p) => {
+          const links = (p.links || [])
+            .map((l) => `<a class="paper__link" href="${esc(l.href)}" target="_blank" rel="noopener">${ICONS.external}${esc(l.label)}</a>`)
+            .join("");
+          const meta = [p.venue, p.status].filter(Boolean).map((m) => `<span>${esc(m)}</span>`).join("");
+          return `<article class="paper reveal">
+            <h3 class="paper__title">${esc(p.title)}</h3>
+            <div class="paper__meta">${meta}</div>
+            <p class="paper__summary">${esc(p.summary)}</p>
+            ${links ? `<div class="paper__links">${links}</div>` : ""}
+          </article>`;
+        })
+        .join("");
+    } else {
+      const s = document.getElementById("papers");
+      const nl = $('.nav__links a[href="#papers"]');
+      if (s) s.remove();
+      if (nl) nl.remove();
+    }
 
     // Writing
     bind("writingIntro").textContent = C.writing.intro || "";
@@ -405,7 +430,8 @@
     // Navigation
     [
       ["About", "about"], ["Experience", "experience"], ["Projects", "projects"],
-      ["Skills", "skills"], ["Writing", "writing"], ["Beyond the code", "beyond"], ["Contact", "contact"],
+      ["GitHub activity", "github"], ["Interactive demo", "demo"], ["Fraud study", "fraudviz"], ["Skills", "skills"],
+      ["Papers & preprints", "papers"], ["Writing", "writing"], ["Beyond the code", "beyond"], ["Contact", "contact"],
     ].forEach(([label, id]) =>
       cmds.push({ group: "Navigate", label, hint: "Section", icon: ICONS.hash, run: () => goTo(id) })
     );
@@ -683,6 +709,7 @@
         const list = repos.filter((r) => !r.fork && !r.archived);
         if (!list.length) {
           wrap.innerHTML = `<div class="ghfeed__error">No public repositories yet — <a href="${esc(profile)}" target="_blank" rel="noopener">visit GitHub →</a></div>`;
+          externalizeLinks(wrap);
           return;
         }
         const stars = list.reduce((s, r) => s + (r.stargazers_count || 0), 0);
@@ -719,9 +746,11 @@
             <span>Most recent commit: <a href="${esc(recent.html_url)}" target="_blank" rel="noopener">${esc(recent.name)}</a>${recentDesc ? " — " + esc(recentDesc.slice(0, 90)) : ""}</span>
             <a class="btn btn--ghost btn--sm" href="${esc(profile)}" target="_blank" rel="noopener">All repositories →</a>
           </div>`;
+        externalizeLinks(wrap); // this feed renders after the initial pass
       })
       .catch(() => {
         wrap.innerHTML = `<div class="ghfeed__error">Couldn't load live activity right now — <a href="${esc(profile)}" target="_blank" rel="noopener">browse GitHub →</a></div>`;
+        externalizeLinks(wrap);
       });
   }
 
@@ -759,9 +788,9 @@
         const bx = x + cum * 6 * drift;
         const by = y + err + cum * 4 * drift;
         bad.push([bx, by]);
-        // Model keeps ~70% of the deviation → ~30% RMSE reduction, in line with
-        // the ~28% improvement measured in my DRDO work (kept honest on purpose).
-        good.push([x + (bx - x) * 0.70, y + (by - y) * 0.70]);
+        // Model keeps ~25% of the deviation (recovers most of the drift) —
+        // illustrative; GateIO measures ~7.5× better than a tuned EKF.
+        good.push([x + (bx - x) * 0.25, y + (by - y) * 0.25]);
       }
       return { bad, good };
     }
@@ -824,6 +853,69 @@
     $("#themeToggle").addEventListener("click", () => setTimeout(() => draw(parseFloat(slider.value)), 0));
   }
 
+  /* =================== Fraud chart: importance vs contribution ======= */
+  function wireFraudViz() {
+    const F = C.fraudViz;
+    const wrap = $("#fviz");
+    if (!F || !F.show || !wrap) {
+      const s = document.getElementById("fraudviz");
+      const nl = $('.nav__links a[href="#fraudviz"]');
+      if (s && !(F && F.show)) s.remove();
+      if (nl && !(F && F.show)) nl.remove();
+      return;
+    }
+    const hd = bind("fraudHeading"); if (hd) hd.textContent = F.heading || "";
+    const cap = bind("fraudCaption"); if (cap) cap.textContent = F.caption || "";
+    const fams = F.families || [];
+    const links = (F.links || [])
+      .map((l) => `<a class="fviz__link" href="${esc(l.href)}" target="_blank" rel="noopener">${ICONS.external}${esc(l.label)}</a>`)
+      .join("");
+    wrap.innerHTML = `
+      <div class="fviz__toggle" role="group" aria-label="Chart view">
+        <button class="fviz__btn" data-view="importance" aria-pressed="true">What SHAP importance says</button>
+        <button class="fviz__btn" data-view="contribution" aria-pressed="false">What actually improves AUPRC</button>
+      </div>
+      <div class="fviz__rows">
+        ${fams.map((f, i) => `
+          <div class="fviz__row" data-i="${i}">
+            <div class="fviz__row-top"><span class="fviz__name">${esc(f.name)}</span><span class="fviz__note" data-note></span></div>
+            <div class="fviz__track"><div class="fviz__bar fviz__bar--imp" data-bar></div></div>
+          </div>`).join("")}
+      </div>
+      <div class="fviz__foot">
+        <div class="fviz__caption" id="fvizCap"></div>
+        ${links}
+      </div>`;
+
+    const rows = $$(".fviz__row", wrap);
+    const setView = (view) => {
+      $$(".fviz__btn", wrap).forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === view)));
+      rows.forEach((row) => {
+        const f = fams[+row.dataset.i];
+        const bar = $("[data-bar]", row);
+        const note = $("[data-note]", row);
+        const val = view === "importance" ? f.importance : f.contribution;
+        bar.style.width = Math.max(0, Math.min(100, val)) + "%";
+        bar.classList.toggle("fviz__bar--imp", view === "importance");
+        bar.classList.toggle("fviz__bar--con", view === "contribution");
+        note.textContent = view === "importance" ? (f.impNote || "") : (f.contribNote || "");
+      });
+      $("#fvizCap", wrap).innerHTML = view === "importance"
+        ? "By SHAP importance, velocity features look essential."
+        : "Measured contribution tells the opposite story — <b>graph features are the real driver, and velocity adds nothing</b>.";
+    };
+    $$(".fviz__btn", wrap).forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
+
+    // Animate to the first view when the section scrolls into view.
+    const start = () => requestAnimationFrame(() => setView("importance"));
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver((es) => {
+        es.forEach((e) => { if (e.isIntersecting) { start(); io.disconnect(); } });
+      }, { threshold: 0.25 });
+      io.observe(wrap);
+    } else { start(); }
+  }
+
   /* =================== Open external links in a new tab ============== */
   // Any http(s) link opens in a new tab (so visitors never leave the page).
   // Internal #anchors and mailto: links are left alone.
@@ -854,6 +946,7 @@
     wireVCard();
     wireGitHub();
     wireDemo();
+    wireFraudViz();
     externalizeLinks(); // all http(s) links open in a new tab
   });
 })();

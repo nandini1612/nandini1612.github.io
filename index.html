@@ -33,8 +33,8 @@
         <a href="#about">About</a>
         <a href="#experience">Experience</a>
         <a href="#projects">Projects</a>
-        <a href="#demo">Demo</a>
         <a href="#skills">Skills</a>
+        <a href="#papers">Papers</a>
         <a href="#writing">Writing</a>
         <a href="#contact">Contact</a>
       </nav>
@@ -184,24 +184,44 @@
             <span class="demo__key demo__key--bad">Inertial drift (GPS lost)</span>
             <span class="demo__key demo__key--good">Model-corrected</span>
           </p>
-          <p class="demo__note">Illustrative visualization of the problem my DRDO / GateIO work addresses — not live model output.</p>
+          <p class="demo__note">Illustrative visualization of the problem GateIO addresses — not live model output.</p>
         </div>
       </div>
+    </section>
+
+    <!-- ===================== FRAUD CHART ===================== -->
+    <section class="section" id="fraudviz">
+      <div class="section__head">
+        <span class="section__index">06</span>
+        <h2 class="section__title" data-bind="fraudHeading"></h2>
+        <p class="section__sub" data-bind="fraudCaption"></p>
+      </div>
+      <div class="fviz" id="fviz"></div>
     </section>
 
     <!-- ===================== SKILLS ===================== -->
     <section class="section" id="skills">
       <div class="section__head">
-        <span class="section__index">06</span>
+        <span class="section__index">07</span>
         <h2 class="section__title">Skills &amp; tools</h2>
       </div>
       <div class="skills" data-bind="skills"></div>
     </section>
 
+    <!-- ===================== PAPERS ===================== -->
+    <section class="section" id="papers">
+      <div class="section__head">
+        <span class="section__index">08</span>
+        <h2 class="section__title">Papers &amp; preprints</h2>
+        <p class="section__sub" data-bind="papersIntro"></p>
+      </div>
+      <div class="papers" data-bind="papers"></div>
+    </section>
+
     <!-- ===================== WRITING ===================== -->
     <section class="section" id="writing">
       <div class="section__head">
-        <span class="section__index">07</span>
+        <span class="section__index">09</span>
         <h2 class="section__title">Writing</h2>
         <p class="section__sub" data-bind="writingIntro"></p>
       </div>
@@ -211,7 +231,7 @@
     <!-- ===================== BEYOND ===================== -->
     <section class="section" id="beyond">
       <div class="section__head">
-        <span class="section__index">08</span>
+        <span class="section__index">10</span>
         <h2 class="section__title">Beyond the code</h2>
       </div>
       <div class="beyond" data-bind="beyond"></div>

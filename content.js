@@ -49,7 +49,7 @@ const CONTENT = {
     },
     // One line on what you're doing right now — signals momentum. "" hides it.
     currently:
-      "Extending my DRDO navigation research in GateIO, and building a computer-vision classifier for phenology data.",
+      "Preparing my GateIO preprint (GPS-outage bridging for UAVs) for submission to IEEE/ION PLANS 2027.",
     // Scannable "at a glance" facts for recruiters. Edit / add / remove freely.
     snapshot: [
       { label: "Based in", value: "Pune, India · open to relocate" },
@@ -82,7 +82,25 @@ const CONTENT = {
     show: true,
     heading: "Navigation when GPS drops",
     caption:
-      "An interactive illustration of the problem my DRDO / GateIO work addresses. Drag to extend the GPS outage: inertial dead-reckoning drifts away from the true path, while the sequence model recovers part of that error, roughly the ~28% RMSE reduction I measured.",
+      "An interactive illustration of the problem GateIO addresses. Drag to extend the GPS outage: inertial dead-reckoning drifts away from the true path, while the model recovers most of that error. GateIO reaches 11.2 m drift over a 10-second outage — about 7.5× better than a tuned Kalman filter.",
+  },
+
+  /* --------------------------------------------------- FRAUD CHART -------- */
+  // Visualizes the flagship fraud-study result. Toggle switches the bars between
+  // "what SHAP importance says" and "what actually improves predictions".
+  // Bar lengths are illustrative; the annotated numbers are measured.
+  fraudViz: {
+    show: true,
+    heading: "One result from the fraud study",
+    caption:
+      "Velocity features top the importance chart, yet add no measurable predictive value once graph features are present. Toggle the view. Bar lengths are illustrative; the annotated numbers are measured.",
+    families: [
+      { name: "Velocity features",            importance: 92, contribution: 5,  impNote: "top-ranked (27–57% of SHAP)", contribNote: "+0.000 · not significant (p = 0.23)" },
+      { name: "Graph / shared-entity features", importance: 34, contribution: 88, impNote: "mid-ranked",                 contribNote: "+0.031 AUPRC · significant (p = 0.002)" },
+    ],
+    links: [
+      { label: "Read the preprint", href: "https://doi.org/10.5281/zenodo.22892826" },
+    ],
   },
 
   /* ------------------------------------------------------- GITHUB FEED ---- */
@@ -110,14 +128,14 @@ const CONTENT = {
       "Final-year Computer Science student (CGPA 9.3/10). I work on machine learning for noisy, incomplete, and changing data.",
     paragraphs: [
       "My work so far has focused on machine learning under difficult conditions: navigation when GPS is unavailable, fraud detection when transaction patterns change over time, and synthetic data that must stay logically valid while preserving statistical utility. I am most interested in whether a model remains reliable when conditions shift, not only how it scores on a benchmark.",
-      "At DRDO I built transformer-based sequence models to reconstruct UAV trajectories during GPS outages. Outside research, I am Vice President of GDG BVP, where I lead technical programming for a 1500+ member developer community, and I write explanatory articles on Medium about topics I am studying.",
+      "In GateIO, a follow-on to my DRDO internship, I built a deep-learning system that keeps UAVs localized through GPS outages — reaching 11.2 m drift over a 10-second dropout, about 7.5× better than a tuned Kalman filter under a leakage-free evaluation. Outside research, I am Vice President of GDG BVP, where I lead technical programming for a 1500+ member developer community, and I write explanatory articles on Medium about topics I am studying.",
     ],
     // Small stat strip. Edit or remove any item.
     facts: [
       { value: "9.3/10", label: "CGPA · ≈1.3 German scale" },
-      { value: "~28%",   label: "RMSE cut at DRDO" },
+      { value: "2",      label: "preprints on Zenodo" },
+      { value: "7.5×",   label: "vs. tuned EKF · GateIO" },
       { value: "1500+",  label: "Community led" },
-      { value: "9+",     label: "ML projects" },
     ],
   },
 
@@ -166,16 +184,49 @@ const CONTENT = {
   projects: {
     featured: [
       {
-        name: "GateIO — Yaw-Rate-Gated Causal TCN",
-        blurb: "Bridging GPS outages in UAV navigation.",
+        name: "GateIO — GPS-Outage Bridging for UAVs",
+        blurb: "Keeping UAVs localized through GPS outages by predicting velocity from IMU data.",
         problem:
-          "When GPS is lost, a UAV relies on inertial-only navigation, where dead-reckoning error accumulates fastest through turns.",
+          "Small UAVs lose position during 10–30 s GPS dropouts, and inertial-only integration drifts quickly. A common evaluation habit — splitting train and test within the same flights — also leaks information and inflates reported accuracy.",
         approach:
-          "Extends my DRDO research by gating a causal temporal convolutional network with a yaw-rate signal, so the model uses turn dynamics where drift is largest.",
+          "A yaw-rate-gated residual model predicts GPS velocity from the onboard IMU and integrates it to position, holding the last velocity in straight flight and reacting through turns. Two backbones (an LSTM and a TCN + attention network) were compared under a leakage-free leave-one-flight-out protocol.",
         result:
-          "Builds on the DRDO model, which reduced trajectory RMSE by about 28% compared with classical dead-reckoning. The yaw-rate gate focuses on the turn segments that classical integration handles poorly.",
-        tags: ["TCN", "PyTorch", "Navigation", "Research"],
-        links: [{ label: "Code", href: "https://github.com/nandini1612/gateio" }],
+          "Within-flight splits inflated accuracy about 3×. Under honest evaluation, the recurrent model reached 11.2 m mean drift over a 10 s outage on the MARS-LVIG aerial dataset — about 7.5× better than a tuned Extended Kalman Filter, and around 10× better on turns. Open-source, with a preprint on Zenodo.",
+        tags: ["PyTorch", "Sequence Models", "State Estimation", "Research"],
+        links: [
+          { label: "Preprint", href: "https://doi.org/10.5281/zenodo.22853978" },
+          { label: "Code", href: "https://github.com/nandini1612/gateio" },
+        ],
+      },
+      {
+        name: "Fraud Detection — System + Feature-Attribution Study",
+        blurb: "A deployable fraud-detection service, and a study of whether feature importance reflects real predictive value.",
+        problem:
+          "Feature-importance charts are routinely used to decide which features matter. Velocity features top these charts in fraud detection — but do they actually improve predictions?",
+        approach:
+          "Built a calibrated LightGBM service on the IEEE-CIS dataset (590K transactions), served via FastAPI with per-prediction SHAP explanations, Prometheus metrics, PSI drift monitoring, Docker, and a 32-test suite. Then ran capacity-matched, temporally-split ablations with Wilcoxon tests and bootstrap intervals across four model families and three importance measures.",
+        result:
+          "Graph and shared-entity features are the significant driver (AUPRC 0.545 → 0.576, +0.031, p = 0.002). Velocity features rank high on SHAP (27–57%) yet add no significant value on two real datasets (p = 0.23 and 0.95) — importance is not contribution. A popular simulated benchmark rewards velocity only through a data-generation artifact. About 2.2M records across four datasets.",
+        tags: ["LightGBM", "SHAP", "FastAPI", "MLOps", "Research"],
+        links: [
+          { label: "Preprint", href: "https://doi.org/10.5281/zenodo.22892826" },
+          { label: "Code", href: "https://github.com/nandini1612/fraud-detection-gnn" },
+        ],
+      },
+      {
+        name: "CashPulse — Finance Health Monitor",
+        blurb: "Cash-flow forecasting and anomaly detection for individuals and small businesses, deployed live.",
+        problem:
+          "People and small businesses managing several accounts lack a simple way to forecast cash flow, catch anomalous transactions, and see how much runway they have.",
+        approach:
+          "An end-to-end pipeline built twice to show both patterns: a local ETL tier (SQLite) and a cloud ELT tier (PostgreSQL, dbt, Airflow, Terraform on AWS). A Gradient Boosting regressor forecasts daily cash flow and an Isolation Forest flags anomalies, served through an authenticated Streamlit dashboard.",
+        result:
+          "Live, authenticated app. The forecaster beat a naive t-7 baseline on every account (for example, $130 vs $524 MAE), and ML outputs are written back as first-class tables for BI tools. 54 automated tests across two CI pipelines. Live demo login: demo / CashPulseDemo!26",
+        tags: ["Data Engineering", "dbt", "Airflow", "scikit-learn", "Streamlit"],
+        links: [
+          { label: "Live demo", href: "https://finance-health-monitor.streamlit.app/" },
+          { label: "Code", href: "https://github.com/nandini1612/finance-health-monitor" },
+        ],
       },
       {
         name: "Synthetic Tabular Data — Validity vs. Utility",
@@ -185,7 +236,7 @@ const CONTENT = {
         approach:
           "A constraint-repair extension that enforces logical and business rules on generated records while preserving the statistical utility of the original output.",
         result:
-          "Separates logical validity from statistical utility: a repair layer that keeps synthetic tabular data logically valid without reducing its statistical usefulness.",
+          "Separates logical validity from statistical utility: a repair layer that keeps synthetic tabular data logically valid without reducing its statistical usefulness. Written up as a manuscript in preparation.",
         tags: ["Synthetic Data", "Constraints", "Tabular ML"],
         links: [{ label: "Code", href: "https://github.com/nandini1612/" }],
       },
@@ -195,23 +246,11 @@ const CONTENT = {
         problem:
           "Climate change shifts the timing of plant and animal life-cycle events, but this mismatch is difficult to quantify from noisy citizen-science data.",
         approach:
-          "Combined iNaturalist and eBird observation data to compute phenology mismatch scores, then validated them against ground truth.",
+          "Combined iNaturalist and eBird observation data to compute phenology mismatch scores and trained a weakly-supervised phenology classifier.",
         result:
-          "Validated to 6.7-day / 2.5-day MAE against ground truth; now expanding into a computer-vision classifier for citizen-science photos.",
-        tags: ["Geospatial", "CV", "Data Pipelines"],
+          "Validated against five years of independent ground-truth records — not a held-out split of the same dataset — reaching 6.7-day MAE.",
+        tags: ["Geospatial", "Computer Vision", "Data Pipelines"],
         links: [{ label: "Code", href: "https://github.com/nandini1612/phenological_mismatch" }],
-      },
-      {
-        name: "AI Financial Crime Detector",
-        blurb: "How fraud-detection models degrade as transaction patterns change.",
-        problem:
-          "Fraud detectors are trained on historical transactions, but laundering patterns change over time, so accuracy degrades.",
-        approach:
-          "Compared GNN and XGBoost fraud detection under concept drift on the Elliptic Bitcoin dataset, measuring how each degrades as transaction patterns change.",
-        result:
-          "Quantified the performance drop over time for both models, showing which approach stays more reliable as the data distribution shifts.",
-        tags: ["GNN", "XGBoost", "Concept Drift", "Graph ML"],
-        links: [{ label: "Code", href: "https://github.com/nandini1612/fraud-detection-gnn" }],
       },
       {
         name: "CancerScope — Breast Cancer Detection",
@@ -259,15 +298,52 @@ const CONTENT = {
   /* ------------------------------------------------------------ SKILLS ---- */
   skills: [
     { group: "Languages",   items: ["Python", "TypeScript", "JavaScript", "Java", "SQL", "C"] },
-    { group: "ML / DL",     items: ["PyTorch", "PyTorch Geometric", "TensorFlow", "HuggingFace Transformers", "scikit-learn", "XGBoost", "Statsmodels", "SHAP"] },
-    { group: "Focus areas", items: ["Time-series forecasting", "Graph neural networks", "Sequence modeling", "Concept-drift analysis", "Computer vision", "Model explainability"] },
-    { group: "Web & infrastructure", items: ["FastAPI", "Flask", "Spring Boot", "React", "Vue.js", "PostgreSQL", "PostGIS", "Git", "AWS", "GCP"] },
+    { group: "ML / DL",     items: ["PyTorch", "LightGBM", "XGBoost", "scikit-learn", "HuggingFace Transformers", "SHAP"] },
+    { group: "Focus areas", items: ["Time-series forecasting", "Sequence modeling (LSTM, TCN + attention)", "Anomaly detection", "Model interpretability", "Experiment design & statistical testing", "State estimation (EKF)"] },
+    { group: "MLOps & data engineering", items: ["FastAPI", "Docker", "Prometheus", "MLflow", "Apache Airflow", "dbt", "Terraform"] },
+    { group: "Web & cloud", items: ["Flask", "Spring Boot", "React", "Vue.js", "Streamlit", "PostgreSQL", "AWS", "GCP", "Git"] },
   ],
 
+  /* ------------------------------------------------------------ PAPERS ---- */
+  // Preprints and work in progress. Kept separate from the informal Medium notes.
+  papers: {
+    intro: "Preprints and work in progress.",
+    items: [
+      {
+        title: "GateIO: Yaw-Rate-Gated Causal Deep Learning for UAV GPS-Outage Bridging",
+        venue: "Preprint · Zenodo",
+        status: "Preparing submission to IEEE/ION PLANS 2027",
+        summary: "A yaw-rate-gated model predicts UAV velocity from IMU data to bridge GPS outages, evaluated with a leakage-free leave-one-flight-out protocol.",
+        links: [
+          { label: "Preprint (DOI)", href: "https://doi.org/10.5281/zenodo.22853978" },
+          { label: "Code", href: "https://github.com/nandini1612/gateio" },
+        ],
+      },
+      {
+        title: "Importance Is Not Contribution: Velocity Features Are Redundant on Real Fraud Data but Rewarded by Simulated Benchmarks",
+        venue: "Preprint · Zenodo",
+        status: "",
+        summary: "Shows that features topping importance charts can add no real predictive value, and that a common simulated fraud benchmark rewards them through a data-generation artifact.",
+        links: [
+          { label: "Preprint (DOI)", href: "https://doi.org/10.5281/zenodo.22892826" },
+          { label: "Code", href: "https://github.com/nandini1612/fraud-detection-gnn" },
+        ],
+      },
+      {
+        title: "Disentangling Logical Validity from Statistical Utility in Synthetic Tabular Data",
+        venue: "Manuscript in preparation",
+        status: "",
+        summary: "A constraint-repair approach that keeps generated tabular records logically valid while preserving their statistical utility.",
+        links: [],
+      },
+    ],
+  },
+
   /* ----------------------------------------------------------- WRITING ---- */
-  // Published explainers. Add exact article URLs when you have them.
+  // Informal Medium explainers — kept deliberately low-key so they don't read
+  // as research (the peer-facing work lives in the Papers section above).
   writing: {
-    intro: "I write explanatory articles on Medium about topics I am studying.",
+    intro: "Informal explainers I write on Medium while working through ideas — notes, not research.",
     profileUrl: "https://medium.com/@nandinisaxenawork",
     posts: [
       { title: "How Prophet models seasonality with sin and cos", summary: "How a forecast is decomposed into trend and seasonal components.", href: "https://medium.com/@nandinisaxenawork/when-time-looks-random-but-isnt-how-prophet-uses-sin-and-cos-to-model-seasonality-5c6efa723feb?sharedUserId=nandinisaxenawork" },

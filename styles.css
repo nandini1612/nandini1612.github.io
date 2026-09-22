@@ -390,7 +390,7 @@ kbd .mod { font-size: 1em; }
   transition: border-color 0.2s, color 0.2s;
 }
 .project__link:hover { color: var(--text); border-color: var(--border-strong); }
-.project__link svg { width: 14px; height: 14px; fill: currentColor; }
+.project__link svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
 .more-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .more {
@@ -429,6 +429,31 @@ kbd .mod { font-size: 1em; }
   transition: border-color 0.2s, transform 0.15s;
 }
 .chip:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+/* ------------------------------------------------------------- PAPERS ---- */
+.papers { display: flex; flex-direction: column; gap: 14px; }
+.paper {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.paper:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+.paper__title { font-size: 16.5px; font-weight: 700; line-height: 1.35; letter-spacing: -0.01em; }
+.paper__meta { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 9px; font-family: var(--font-mono); font-size: 12px; }
+.paper__meta span:first-child { color: var(--accent); font-weight: 600; }
+.paper__meta span + span { color: var(--text-3); }
+.paper__summary { color: var(--text-2); font-size: 14.5px; margin-top: 12px; }
+.paper__links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.paper__link {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 600; color: var(--text-2);
+  padding: 6px 12px; border: 1px solid var(--border); border-radius: 8px;
+  transition: border-color 0.2s, color 0.2s;
+}
+.paper__link:hover { color: var(--text); border-color: var(--border-strong); }
+.paper__link svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
 /* ------------------------------------------------------------ WRITING ---- */
 .writing { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -632,6 +657,45 @@ kbd .mod { font-size: 1em; }
 .demo__key--bad::before { background: #ef6a54; }
 .demo__key--good::before { background: var(--accent); }
 .demo__note { font-size: 11.5px; color: var(--text-3); margin-top: 14px; font-style: italic; }
+
+/* =================== FRAUD CHART (importance vs contribution) === */
+.fviz {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: clamp(20px, 3vw, 30px);
+}
+.fviz__toggle { display: inline-flex; gap: 4px; padding: 4px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 11px; margin-bottom: 26px; }
+.fviz__btn {
+  padding: 8px 16px; border: none; background: none; cursor: pointer;
+  border-radius: 8px; font-family: var(--font-sans); font-size: 13.5px; font-weight: 600;
+  color: var(--text-3); transition: background 0.2s, color 0.2s;
+}
+.fviz__btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.fviz__rows { display: flex; flex-direction: column; gap: 22px; }
+.fviz__row-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+.fviz__name { font-weight: 600; font-size: 15px; }
+.fviz__note { font-family: var(--font-mono); font-size: 12px; color: var(--text-3); }
+.fviz__track { height: 26px; background: var(--surface-2); border-radius: 8px; overflow: hidden; }
+.fviz__bar {
+  height: 100%; width: 0;
+  border-radius: 8px;
+  transition: width 0.7s cubic-bezier(.22,.61,.36,1), background 0.4s;
+}
+@media (prefers-reduced-motion: reduce) { .fviz__bar { transition: none; } }
+.fviz__bar--imp { background: linear-gradient(90deg, var(--text-3), color-mix(in srgb, var(--text-3) 55%, var(--surface))); }
+.fviz__bar--con { background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+.fviz__foot { margin-top: 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.fviz__caption { font-size: 13.5px; color: var(--text-2); max-width: 640px; }
+.fviz__caption b { color: var(--text); }
+.fviz__link {
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  font-size: 13px; font-weight: 600; color: var(--text-2);
+  padding: 7px 13px; border: 1px solid var(--border); border-radius: 9px;
+  transition: border-color 0.2s, color 0.2s;
+}
+.fviz__link:hover { color: var(--text); border-color: var(--border-strong); }
+.fviz__link svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
 /* =================== SCROLL PROGRESS BAR ==================== */
 .progress {
