@@ -238,7 +238,7 @@ const CONTENT = {
         result:
           "Separates logical validity from statistical utility: a repair layer that keeps synthetic tabular data logically valid without reducing its statistical usefulness. Written up as a manuscript in preparation.",
         tags: ["Synthetic Data", "Constraints", "Tabular ML"],
-        links: [{ label: "Code", href: "https://github.com/nandini1612/" }],
+        links: [{ label: "Code", href: "https://github.com/nandini1612/hierarchical-synthetic-tabular-data-generation" }],
       },
       {
         name: "Phenological Mismatch Observatory",
@@ -334,7 +334,9 @@ const CONTENT = {
         venue: "Manuscript in preparation",
         status: "",
         summary: "A constraint-repair approach that keeps generated tabular records logically valid while preserving their statistical utility.",
-        links: [],
+        links: [
+          { label: "Code", href: "https://github.com/nandini1612/hierarchical-synthetic-tabular-data-generation" },
+        ],
       },
     ],
   },
