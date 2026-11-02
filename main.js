@@ -23,6 +23,24 @@
       <img class="themed themed--light" src="${esc(f.light)}" alt="" aria-hidden="true" loading="lazy" />
       ${f.caption ? `<figcaption class="viz__cap">${esc(f.caption)}</figcaption>` : ""}
     </figure>`;
+  // Panel holding a figure (one image per theme) with a small corner label.
+  const spotVisual = (v) => `<div class="spot__visual">
+      <img class="spot__img themed--dark" src="${esc(v.dark)}" alt="${esc(v.alt)}" />
+      <img class="spot__img themed--light" src="${esc(v.light)}" alt="" aria-hidden="true" />
+      ${v.label ? `<span class="spot__label">${esc(v.label)}</span>` : ""}
+    </div>`;
+  // One measured comparison as labelled bars; lengths are to scale.
+  const storyPanel = (st) => {
+    const max = Math.max(...st.rows.map((r) => r.value));
+    return `<div class="story">
+      <div class="story__head"><span class="story__title">${esc(st.title)}</span><span class="story__unit">${esc(st.unit)}</span></div>
+      ${st.rows.map((r) => `<div class="story__row${r.highlight ? " is-best" : ""}">
+        <div class="story__top"><span>${esc(r.label)}</span><b>${esc(Number(r.value).toFixed(1))} m</b></div>
+        <div class="story__track"><div class="story__bar" style="width:${((r.value / max) * 100).toFixed(1)}%"></div></div>
+      </div>`).join("")}
+      ${st.note ? `<p class="story__note">${esc(st.note)}</p>` : ""}
+    </div>`;
+  };
   const bind = (name) => $(`[data-bind="${name}"]`);
 
   /* ------------------------------------------------------------ ICONS --- */
@@ -91,6 +109,8 @@
     if (D && D.show) {
       bind("demoHeading").textContent = D.heading;
       bind("demoCaption").textContent = D.caption;
+      const res = bind("demoResults");
+      if (res && D.visual && D.story) res.innerHTML =spotVisual(D.visual) + `<div class="results__side">${storyPanel(D.story)}</div>`;
     } else {
       const s = document.getElementById("demo");
       const nl = $('.nav__links a[href="#demo"]');
@@ -144,6 +164,10 @@
       .join("");
 
     // Projects — featured
+    // Spotlight cards alternate their visual's side; an unpaired regular card spans the row.
+    let spotN = 0;
+    const regular = C.projects.featured.filter((p) => !p.spotlight);
+    const unpaired = regular.length % 2 ? regular[regular.length - 1] : null;
     bind("projectsFeatured").innerHTML = C.projects.featured
       .map((p, i) => {
         const links = (p.links || [])
@@ -161,15 +185,41 @@
           .map(([k, v]) => `<div class="par"><div class="par__label">${k}</div><div class="par__text">${esc(v)}</div></div>`)
           .join("");
         const fig = p.figure ? themedFigure(p.figure) : "";
-        return `<article class="project reveal" data-project="${i}" data-tags="${esc((p.tags || []).join("|").toLowerCase())}">
-          <div class="project__name">${esc(p.name)}</div>
-          <p class="project__blurb">${esc(p.blurb)}</p>
-          <button class="project__toggle" aria-expanded="false">Read the story ${ICONS.arrow.replace('viewBox="0 0 24 24"','viewBox="0 0 24 24" style="transform:rotate(90deg)"')}</button>
-          <div class="project__detail"><div class="project__detail-inner">${fig}${detail}</div></div>
-          <div class="project__foot">
+        const toggle = `<button class="project__toggle" aria-expanded="false">Read the story ${ICONS.arrow.replace('viewBox="0 0 24 24"','viewBox="0 0 24 24" style="transform:rotate(90deg)"')}</button>
+          <div class="project__detail"><div class="project__detail-inner">${fig}${detail}</div></div>`;
+        const foot = `<div class="project__foot">
             <div class="tags">${(p.tags || []).map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>
             <div class="project__links">${links}</div>
-          </div>
+          </div>`;
+        const attrs = `data-project="${i}" data-tags="${esc((p.tags || []).join("|").toLowerCase())}"`;
+
+        // Wide card: visual on the left, summary and one measured comparison on the right.
+        const S = p.spotlight;
+        if (S) {
+          const features = S.features
+            ? `<div class="spot__features">${S.features.map((f) => `<div class="spot__feature">${esc(f)}</div>`).join("")}</div>`
+            : "";
+          const flip = spotN++ % 2 ? " project--flip" : "";
+          return `<article class="project project--spotlight${flip} reveal" ${attrs}>
+            ${spotVisual(S.visual)}
+            <div class="spot__body">
+              <div class="spot__kicker">${esc(S.kicker)}</div>
+              <div class="project__name spot__title">${esc(S.title)}</div>
+              <div class="spot__subtitle">${esc(S.subtitle)}</div>
+              <p class="spot__summary">${esc(S.summary)}</p>
+              ${features}
+              ${S.story ? storyPanel(S.story) : ""}
+              ${toggle}
+              ${foot}
+            </div>
+          </article>`;
+        }
+
+        return `<article class="project${p === unpaired ? " project--wide" : ""} reveal" ${attrs}>
+          <div class="project__name">${esc(p.name)}</div>
+          <p class="project__blurb">${esc(p.blurb)}</p>
+          ${toggle}
+          ${foot}
         </article>`;
       })
       .join("");

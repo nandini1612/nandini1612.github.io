@@ -165,11 +165,8 @@
         <h2 class="section__title" data-bind="demoHeading"></h2>
         <p class="section__sub" data-bind="demoCaption"></p>
       </div>
-      <figure class="viz">
-        <img class="themed themed--dark" src="assets/outage-dark.svg" alt="Simulated GPS outage: the aircraft turns after GPS is lost while holding the last velocity keeps going straight. Below, measured mean drift after 10 s: GateIO-LSTM 11.2 m, GateIO-TCN 23.4, RoNIN 40.1, constant velocity 85.0, EKF 99.5." loading="lazy" />
-        <img class="themed themed--light" src="assets/outage-light.svg" alt="" aria-hidden="true" loading="lazy" />
-        <figcaption class="viz__cap">The flight is simulated to show the failure mode. The bars are measured results from the GateIO preprint.</figcaption>
-      </figure>
+      <!-- simulated failure mode beside the measured results (content.js → demo) -->
+      <div class="results" data-bind="demoResults"></div>
     </section>
 
     <!-- ===================== FRAUD CHART ===================== -->

@@ -78,11 +78,31 @@ const CONTENT = {
   },
 
   /* ------------------------------------------------------- GPS OUTAGE ---- */
+  // GateIO's results: the failure mode (simulated) beside the measured comparison.
+  // How the model works is shown on the GateIO project card instead.
   demo: {
     show: true,
     heading: "Navigation when GPS drops",
     caption:
-      "When GPS drops out, a drone has to estimate position from inertial data alone, and the simplest fallback, holding the last velocity, cannot follow a turn. GateIO learns that correction: 11.2 m mean drift over a 10-second outage, about 7.5× better than a tuned Kalman filter.",
+      "When GPS drops out, a drone has to estimate position from inertial data alone, and the simplest fallback, holding the last velocity, cannot follow a turn. Here is how far each method ends up after a 10-second outage.",
+    visual: {
+      dark: "assets/outage-sim-dark.svg",
+      light: "assets/outage-sim-light.svg",
+      alt: "Simulated GPS outage: after GPS is lost the aircraft turns, while holding the last velocity keeps going straight and drifts away.",
+      label: "simulation",
+    },
+    story: {
+      title: "Performance story",
+      unit: "metres of drift · lower is better",
+      note: "Mean endpoint drift after a 10 s outage, leave-one-flight-out on MARS-LVIG, 1,390 held-out sequences. GateIO-LSTM is about 7.5× closer than the tuned EKF, and roughly 10× closer on turns.",
+      rows: [
+        { label: "Tuned EKF",          value: 99.5 },
+        { label: "Hold last velocity", value: 85.0 },
+        { label: "RoNIN (learned)",    value: 40.1 },
+        { label: "GateIO-TCN",         value: 23.4 },
+        { label: "GateIO-LSTM",        value: 11.2, highlight: true },
+      ],
+    },
   },
 
   /* --------------------------------------------------- FRAUD CHART -------- */
@@ -187,6 +207,29 @@ const CONTENT = {
       {
         name: "GateIO — GPS-Outage Bridging for UAVs",
         blurb: "Keeping UAVs localized through GPS outages by predicting velocity from IMU data.",
+        // Optional: a wide, two-column card with a how-it-works visual. Consecutive
+        // spotlight cards alternate the visual's side automatically.
+        spotlight: {
+          kicker: "State estimation · Research",
+          title: "GateIO",
+          subtitle: "GPS-outage bridging for UAVs",
+          summary:
+            "When GPS drops out, a drone has to work out where it is from inertial data alone. GateIO predicts the change from the last known velocity, with a yaw-rate gate that holds course on straight flight and lets the model learn through turns.",
+          // How it works, drawn from the GateIO README (scripts/make_figures.py → howitworks).
+          visual: {
+            dark: "assets/gateio-how-dark.svg",
+            light: "assets/gateio-how-light.svg",
+            alt: "GateIO pipeline: a 1-second IMU window goes through a token encoder and a causal LSTM to a residual head that predicts the velocity change; that change is added to the last GPS velocity and integrated to position. Below, the training-time yaw-rate gate: on straight flight a prior holds velocity, on turns the drift loss teaches the turn.",
+            label: "illustration",
+          },
+          // Short feature tiles. Results live in the "Navigation when GPS drops" section.
+          features: [
+            "Residual head: zero means hold velocity",
+            "Yaw-rate gate during training",
+            "LSTM or TCN + attention backbone",
+            "Leave-one-flight-out evaluation",
+          ],
+        },
         problem:
           "Small UAVs lose position during 10–30 s GPS dropouts, and inertial-only integration drifts quickly. A common evaluation habit — splitting train and test within the same flights — also leaks information and inflates reported accuracy.",
         approach:
@@ -202,6 +245,25 @@ const CONTENT = {
       {
         name: "Fraud Detection — System + Feature-Attribution Study",
         blurb: "A deployable fraud-detection service, and a study of whether feature importance reflects real predictive value.",
+        spotlight: {
+          kicker: "Explainable ML · Research",
+          title: "Fraud Detection",
+          subtitle: "A deployable service, and a study of which features matter",
+          summary:
+            "Importance charts said rolling “velocity” features mattered most. Ablations on time-ordered data said otherwise: the shared-entity graph features carry the signal. The served model scores one raw transaction and explains every decision.",
+          visual: {
+            dark: "assets/fraud-how-dark.svg",
+            light: "assets/fraud-how-light.svg",
+            alt: "A new transaction links to its card, address and email in a shared-entity graph, giving features such as how many cards used the same address. It is then scored by a sigmoid-calibrated LightGBM behind FastAPI, which returns a fraud probability of 0.9645 with SHAP contributions: card1_te +1.90, TransactionAmt +0.94, addr1_unique_cards +0.90.",
+            label: "illustration",
+          },
+          features: [
+            "Calibrated LightGBM behind FastAPI",
+            "SHAP explanation per decision",
+            "Prometheus metrics and PSI drift",
+            "Capacity-matched ablations, Wilcoxon tests",
+          ],
+        },
         problem:
           "Feature-importance charts are routinely used to decide which features matter. Velocity features top these charts in fraud detection — but do they actually improve predictions?",
         approach:
@@ -217,6 +279,25 @@ const CONTENT = {
       {
         name: "CashPulse — Finance Health Monitor",
         blurb: "Cash-flow forecasting and anomaly detection for individuals and small businesses, deployed live.",
+        spotlight: {
+          kicker: "Data engineering · ML",
+          title: "CashPulse",
+          subtitle: "Cash-flow forecasting and anomaly detection, deployed live",
+          summary:
+            "An end-to-end pipeline built twice: a SQLite quickstart and a Postgres, dbt, Airflow and Terraform cloud tier. The ML tasks only run once 18 data-quality tests pass, and the forecaster beats a naive baseline on every account.",
+          visual: {
+            dark: "assets/cashpulse-how-dark.svg",
+            light: "assets/cashpulse-how-light.svg",
+            alt: "CashPulse's Airflow DAG: raw Postgres tables, dbt staging, dbt analytics, then dbt test counting up to 18 of 18 before the ML tasks and the Streamlit dashboard run. Below, daily net cash flow with a dashed 30-day forecast and two flagged anomalies, a duplicate charge and a card-testing burst. Backtest MAE 130 dollars versus 524 for the naive baseline.",
+            label: "illustration",
+          },
+          features: [
+            "Forecast MAE $130 vs naive $524",
+            "Isolation Forest anomaly flags",
+            "18 dbt tests gate the DAG",
+            "Per-login auth on a live demo",
+          ],
+        },
         problem:
           "People and small businesses managing several accounts lack a simple way to forecast cash flow, catch anomalous transactions, and see how much runway they have.",
         approach:
@@ -232,6 +313,25 @@ const CONTENT = {
       {
         name: "Synthetic Tabular Data — Validity vs. Utility",
         blurb: "Keeping generated tabular records logically valid without losing statistical utility.",
+        spotlight: {
+          kicker: "Synthetic data · Research",
+          title: "Verity",
+          subtitle: "Constraint repair for synthetic tabular data",
+          summary:
+            "Synthetic rows can score well on utility and still be impossible. Verity detects them with per-schema rules and repairs them, bringing invalid rows to 0% for every generator. It also showed that a popular utility boost from k-NN repair is real data leaking in.",
+          visual: {
+            dark: "assets/verity-how-dark.svg",
+            light: "assets/verity-how-light.svg",
+            alt: "Verity's pipeline: generator, detector, repair loop, evaluation. A grid of 40 synthetic rows has 40 percent turn invalid at the detector, then all are fixed within three passes. An example row with pdays -1 and previous 3 is repaired to previous 0. Below, k-NN repair raises TSTR AUROC by 0.08 to 0.12 while canonical repair changes it by -0.07 to -0.01, both at 0 percent invalid, so the k-NN gain was leakage.",
+            label: "illustration",
+          },
+          features: [
+            "Generator-agnostic, no training",
+            "Deterministic, k-NN and canonical repair",
+            "Converges within three passes",
+            "With Snigdha Sarkar · manuscript in prep",
+          ],
+        },
         problem:
           "Synthetic-data metrics score columns individually or in aggregate, so a generator can look strong on downstream utility while emitting rows that could never exist (for example, a customer 'never contacted' who was contacted three times). The baseline hierarchical framework names logical constraints but never implements them.",
         approach:
@@ -253,21 +353,15 @@ const CONTENT = {
         tags: ["Geospatial", "Computer Vision", "Data Pipelines"],
         links: [{ label: "Code", href: "https://github.com/nandini1612/phenological_mismatch" }],
       },
-      {
-        name: "CancerScope — Breast Cancer Detection",
-        blurb: "Classifying breast ultrasound images as benign or malignant.",
-        problem:
-          "Breast ultrasound is widely used for screening, but reading it is operator-dependent, so a consistent automated second read can support triage.",
-        approach:
-          "A full-stack application that classifies breast ultrasound images as benign or malignant, trained on the BUSI dataset.",
-        result:
-          "An end-to-end tool: an image classifier trained on ultrasound scans, served behind a web interface for uploading and scoring images.",
-        tags: ["Computer Vision", "Medical Imaging", "Classification", "Full-stack"],
-        links: [{ label: "Code", href: "https://github.com/nandini1612/cancerscope" }],
-      },
     ],
     // Compact list — one line each.
     more: [
+      {
+        name: "CancerScope — Breast Cancer Detection",
+        blurb: "Full-stack app that classifies breast ultrasound images (BUSI dataset) as benign or malignant.",
+        tags: ["Computer Vision", "Medical Imaging", "Full-stack"],
+        links: [{ label: "Code", href: "https://github.com/nandini1612/cancerscope" }],
+      },
       {
         name: "Chicago Crime Analytics Platform",
         blurb:

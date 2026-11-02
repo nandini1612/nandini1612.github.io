@@ -847,3 +847,90 @@ kbd .mod { font-size: 1em; }
 .viz--hero { margin-top: 48px; }
 .viz--beyond { margin: 28px auto 0; max-width: 760px; }
 .project__detail-inner .viz { margin: 4px 0 6px; }
+
+/* ---------------------------------------------------- SPOTLIGHT CARD ---- */
+/* A wide project card (content.js → spotlight): visual left, summary and one
+   measured comparison right. Meant for one or two projects, not all of them. */
+.project--spotlight {
+  grid-column: 1 / -1;
+  display: grid; grid-template-columns: 1.05fr 1fr;
+  padding: 0; overflow: hidden;
+}
+.project--spotlight:hover { transform: none; }
+.spot__visual {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  padding: 28px 24px 44px;
+  background: var(--bg-2);
+  border-right: 1px solid var(--border);
+}
+.spot__img { display: block; width: 100%; height: auto; border-radius: var(--radius-sm); }
+.spot__img.themed--light { display: none; }
+:root[data-theme="light"] .spot__img.themed--dark { display: none; }
+:root[data-theme="light"] .spot__img.themed--light { display: block; }
+.spot__label {
+  position: absolute; left: 16px; bottom: 14px;
+  font-family: var(--font-mono); font-size: 11px; color: var(--text-3);
+  border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px;
+}
+.spot__body { padding: 30px 30px 24px; display: flex; flex-direction: column; }
+.spot__kicker {
+  font-family: var(--font-mono); font-size: 11.5px; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
+}
+.spot__title { font-family: var(--font-serif); font-size: 30px; font-weight: 600; margin-top: 8px; }
+.spot__subtitle { color: var(--text-3); font-size: 15px; margin-top: 2px; }
+.spot__summary { color: var(--text-2); font-size: 15px; margin: 14px 0 0; }
+
+.story {
+  margin-top: 20px; padding: 18px 18px 14px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg-2);
+}
+.story__head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.story__title {
+  font-family: var(--font-mono); font-size: 11.5px; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-2);
+}
+.story__unit { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
+.story__row { margin-top: 13px; }
+.story__top { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 13px; color: var(--text-2); }
+.story__top b { font-weight: 600; color: var(--text-2); }
+.story__track { height: 7px; margin-top: 6px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.story__bar { height: 100%; border-radius: 4px; background: color-mix(in srgb, var(--text-3) 70%, transparent); }
+.story__row.is-best .story__top, .story__row.is-best .story__top b { color: var(--text); }
+.story__row.is-best .story__bar { background: var(--accent); }
+.story__note { margin: 12px 0 0; font-size: 12px; color: var(--text-3); line-height: 1.5; }
+
+@media (max-width: 860px) {
+  .project--spotlight { grid-template-columns: 1fr; }
+  .spot__visual { border-right: none; border-bottom: 1px solid var(--border); }
+}
+.spot__features { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 18px; }
+.spot__feature {
+  font-size: 13.5px; color: var(--text-2); line-height: 1.4;
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg-2);
+}
+
+/* GPS section: simulation beside the measured comparison */
+.results {
+  display: grid; grid-template-columns: 1.05fr 1fr;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.results__side { padding: 28px; display: flex; flex-direction: column; justify-content: center; }
+.results__side .story { margin-top: 0; }
+@media (max-width: 860px) {
+  .results { grid-template-columns: 1fr; }
+  .spot__features { grid-template-columns: 1fr; }
+}
+
+/* every second spotlight puts its visual on the right */
+.project--flip { grid-template-columns: 1fr 1.05fr; }
+.project--flip .spot__visual { order: 2; border-right: none; border-left: 1px solid var(--border); }
+.project--wide { grid-column: 1 / -1; }
+@media (max-width: 860px) {
+  .project--flip { grid-template-columns: 1fr; }
+  .project--flip .spot__visual { order: 0; border-left: none; }
+}
