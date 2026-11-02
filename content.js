@@ -112,13 +112,14 @@ const CONTENT = {
   },
 
   /* ----------------------------------------------------------- SOCIALS ---- */
-  // icon: one of  github | linkedin | medium | kaggle | mail  (add more in main.js if needed)
+  // icon: one of  github | linkedin | medium | kaggle | orcid | mail  (add more in main.js if needed)
   socials: [
     { label: "GitHub",   icon: "github",   href: "https://github.com/nandini1612/",              handle: "nandini1612" },
     { label: "LinkedIn", icon: "linkedin", href: "https://www.linkedin.com/in/nandini-saxena1111/", handle: "nandini-saxena1111" },
     { label: "Medium",   icon: "medium",   href: "https://medium.com/@nandinisaxenawork",         handle: "@nandinisaxenawork" },
     { label: "Kaggle",   icon: "kaggle",   href: "https://www.kaggle.com/nandinisaxenaaa",        handle: "nandinisaxenaaa" },
-    { label: "Email",    icon: "mail",     href: "mailto:nandinisaxenawork@gmail.com",            handle: "nandinisaxenawork@gmail.com" },
+    { label: "ORCID",    icon: "orcid",    href: "https://orcid.org/0009-0006-6751-1528",         handle: "0009-0006-6751-1528" },
+    { label: "Email",    icon: "mail",    href: "mailto:nandinisaxenawork@gmail.com",            handle: "nandinisaxenawork@gmail.com" },
   ],
 
   /* ------------------------------------------------------------- ABOUT ---- */
