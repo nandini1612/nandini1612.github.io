@@ -25,7 +25,7 @@ const CONTENT = {
     role: "Machine Learning · Data Science",
     // One or two punchy lines. This is your positioning — keep it tight.
     tagline:
-      "I work on machine learning for difficult data: sensor failure, concept drift, and synthetic-data integrity. Former research intern at DRDO.",
+      "I work on machine learning for difficult data: sensor failure, concept drift, and synthetic-data integrity. Former ML intern at DRDO (DIAT).",
     location: "Pune, India",
     email: "nandinisaxenawork@gmail.com",
     // Résumé formats offered in the in-page viewer (first one is the default).
@@ -77,12 +77,12 @@ const CONTENT = {
     vcard: { title: "Machine Learning / Data Science", org: "", phone: "" },
   },
 
-  /* -------------------------------------------------------- LIVE DEMO ---- */
+  /* ------------------------------------------------------- GPS OUTAGE ---- */
   demo: {
     show: true,
     heading: "Navigation when GPS drops",
     caption:
-      "An interactive illustration of the problem GateIO addresses. Drag to extend the GPS outage: inertial dead-reckoning drifts away from the true path, while the model recovers most of that error. GateIO reaches 11.2 m drift over a 10-second outage — about 7.5× better than a tuned Kalman filter.",
+      "When GPS drops out, a drone has to estimate position from inertial data alone, and the simplest fallback, holding the last velocity, cannot follow a turn. GateIO learns that correction: 11.2 m mean drift over a 10-second outage, about 7.5× better than a tuned Kalman filter.",
   },
 
   /* --------------------------------------------------- FRAUD CHART -------- */
@@ -189,10 +189,10 @@ const CONTENT = {
         problem:
           "Small UAVs lose position during 10–30 s GPS dropouts, and inertial-only integration drifts quickly. A common evaluation habit — splitting train and test within the same flights — also leaks information and inflates reported accuracy.",
         approach:
-          "A yaw-rate-gated residual model predicts GPS velocity from the onboard IMU and integrates it to position, holding the last velocity in straight flight and reacting through turns. Two backbones (an LSTM and a TCN + attention network) were compared under a leakage-free leave-one-flight-out protocol.",
+          "A residual output head predicts the change from the last known GPS velocity, and a yaw-rate gate holds that velocity in straight flight while letting the drift loss train turning dynamics. Velocity is integrated to position. Two interchangeable backbones (LSTM and TCN + attention) were compared against a tuned EKF, constant-velocity hold, and RoNIN (a learned IMU velocity regressor) under leave-one-flight-out cross-validation with model selection on a held-out validation flight.",
         result:
-          "Within-flight splits inflated accuracy about 3×. Under honest evaluation, the recurrent model reached 11.2 m mean drift over a 10 s outage on the MARS-LVIG aerial dataset — about 7.5× better than a tuned Extended Kalman Filter, and around 10× better on turns. Open-source, with a preprint on Zenodo.",
-        tags: ["PyTorch", "Sequence Models", "State Estimation", "Research"],
+          "Within-flight splits inflated accuracy about 3× and even flipped which backbone looked best. Under leave-one-flight-out evaluation on the MARS-LVIG aerial dataset (1,390 held-out 10 s outages across five flights), the LSTM reached 11.2 m mean endpoint drift, against 40.1 m for RoNIN, 85.0 m for constant velocity and 99.5 m for a tuned Extended Kalman Filter: about 7.5× better than the EKF, and around 10× better on turns. Open-source, with a preprint on Zenodo.",
+        tags: ["PyTorch", "Sequence Models", "State Estimation", "Time-Series", "Research"],
         links: [
           { label: "Preprint", href: "https://doi.org/10.5281/zenodo.22853978" },
           { label: "Code", href: "https://github.com/nandini1612/gateio" },
@@ -219,7 +219,7 @@ const CONTENT = {
         problem:
           "People and small businesses managing several accounts lack a simple way to forecast cash flow, catch anomalous transactions, and see how much runway they have.",
         approach:
-          "An end-to-end pipeline built twice to show both patterns: a local ETL tier (SQLite) and a cloud ELT tier (PostgreSQL, dbt, Airflow, Terraform on AWS). A Gradient Boosting regressor forecasts daily cash flow and an Isolation Forest flags anomalies, served through an authenticated Streamlit dashboard.",
+          "An end-to-end pipeline built twice to show both patterns: a local ETL tier (SQLite) and a cloud ELT tier (PostgreSQL, dbt, Airflow, Terraform on AWS). A Gradient Boosting regressor forecasts 30-day cash flow and an Isolation Forest flags anomalous transactions. In the cloud tier, an Airflow DAG runs the ML tasks only after 18 dbt data-quality tests pass. Results are served through a Streamlit dashboard with per-login access control (bcrypt, signed session cookies).",
         result:
           "Live, authenticated app. The forecaster beat a naive t-7 baseline on every account (for example, $130 vs $524 MAE), and ML outputs are written back as first-class tables for BI tools. 54 automated tests across two CI pipelines. Live demo login: demo / CashPulseDemo!26",
         tags: ["Data Engineering", "dbt", "Airflow", "scikit-learn", "Streamlit"],
@@ -232,12 +232,12 @@ const CONTENT = {
         name: "Synthetic Tabular Data — Validity vs. Utility",
         blurb: "Keeping generated tabular records logically valid without losing statistical utility.",
         problem:
-          "Hierarchical tabular generators produce statistically faithful rows that often violate logical and business constraints, which makes the data unreliable for downstream use.",
+          "Synthetic-data metrics score columns individually or in aggregate, so a generator can look strong on downstream utility while emitting rows that could never exist (for example, a customer 'never contacted' who was contacted three times). The baseline hierarchical framework names logical constraints but never implements them.",
         approach:
-          "A constraint-repair extension that enforces logical and business rules on generated records while preserving the statistical utility of the original output.",
+          "A generator-agnostic detect-and-repair stage between synthesis and evaluation: per-schema logical rules produce a violation rate, and three repair strategies fix violating rows (deterministic, k-NN projection onto real records, and canonical self-repair that injects no real data). A convergence loop re-checks until no violations remain. Evaluated on Adult and Bank Marketing across three generators, three repair modes and three seeds. Co-authored with Snigdha Sarkar, and packaged as Verity, a CLI and web app for any CSV.",
         result:
-          "Separates logical validity from statistical utility: a repair layer that keeps synthetic tabular data logically valid without reducing its statistical usefulness. Written up as a manuscript in preparation.",
-        tags: ["Synthetic Data", "Constraints", "Tabular ML"],
+          "Invalid rows drop to exactly 0% for every generator (from 40%, 11% and 13%), converging in at most three passes. Repair costs no measurable utility on strong generators. On a weak generator, the apparent TSTR AUROC gain from k-NN repair (+0.08 to +0.12) disappears under canonical repair at the same validity, which shows that gain is leakage of real data, not better synthesis. Manuscript in preparation.",
+        tags: ["Synthetic Data", "Constraints", "Tabular ML", "Research"],
         links: [{ label: "Code", href: "https://github.com/nandini1612/hierarchical-synthetic-tabular-data-generation" }],
       },
       {
@@ -297,11 +297,13 @@ const CONTENT = {
 
   /* ------------------------------------------------------------ SKILLS ---- */
   skills: [
-    { group: "Languages",   items: ["Python", "TypeScript", "JavaScript", "Java", "SQL", "C"] },
-    { group: "ML / DL",     items: ["PyTorch", "LightGBM", "XGBoost", "scikit-learn", "HuggingFace Transformers", "SHAP"] },
-    { group: "Focus areas", items: ["Time-series forecasting", "Sequence modeling (LSTM, TCN + attention)", "Anomaly detection", "Model interpretability", "Experiment design & statistical testing", "State estimation (EKF)"] },
-    { group: "MLOps & data engineering", items: ["FastAPI", "Docker", "Prometheus", "MLflow", "Apache Airflow", "dbt", "Terraform"] },
-    { group: "Web & cloud", items: ["Flask", "Spring Boot", "React", "Vue.js", "Streamlit", "PostgreSQL", "AWS", "GCP", "Git"] },
+    { group: "Languages",   items: ["Python", "SQL", "Java", "TypeScript", "JavaScript", "C"] },
+    { group: "ML / DL frameworks", items: ["PyTorch", "scikit-learn", "LightGBM", "XGBoost", "HuggingFace Transformers"] },
+    { group: "Models & methods", items: ["Sequence models (LSTM, TCN + attention)", "Gradient-boosted trees", "Anomaly detection (Isolation Forest)", "State estimation (EKF)", "Time-series forecasting (VAR, Prophet)", "Synthetic tabular data"] },
+    { group: "Evaluation & interpretability", items: ["Temporal & leave-one-group-out CV", "Capacity-matched ablations", "Wilcoxon tests & bootstrap CIs", "Probability calibration", "SHAP"] },
+    { group: "MLOps & serving", items: ["FastAPI", "Docker", "MLflow", "Prometheus", "Drift monitoring (PSI)", "GitHub Actions", "pytest"] },
+    { group: "Data engineering", items: ["PostgreSQL", "PostGIS", "dbt", "Apache Airflow", "Terraform"] },
+    { group: "Web & cloud", items: ["Flask", "Spring Boot", "React", "Vue.js", "Streamlit", "AWS", "GCP", "Git"] },
   ],
 
   /* ------------------------------------------------------------ PAPERS ---- */
@@ -313,7 +315,7 @@ const CONTENT = {
         title: "GateIO: Yaw-Rate-Gated Causal Deep Learning for UAV GPS-Outage Bridging",
         venue: "Preprint · Zenodo",
         status: "Preparing submission to IEEE/ION PLANS 2027",
-        summary: "A yaw-rate-gated model predicts UAV velocity from IMU data to bridge GPS outages, evaluated with a leakage-free leave-one-flight-out protocol.",
+        summary: "A yaw-rate-gated residual model predicts UAV velocity from IMU data to bridge GPS outages. Under leave-one-flight-out evaluation it reaches 11.2 m endpoint drift over a 10 s outage, about 7.5× better than a tuned EKF.",
         links: [
           { label: "Preprint (DOI)", href: "https://doi.org/10.5281/zenodo.22853978" },
           { label: "Code", href: "https://github.com/nandini1612/gateio" },
@@ -333,7 +335,7 @@ const CONTENT = {
         title: "Disentangling Logical Validity from Statistical Utility in Synthetic Tabular Data",
         venue: "Manuscript in preparation",
         status: "",
-        summary: "A constraint-repair approach that keeps generated tabular records logically valid while preserving their statistical utility.",
+        summary: "A generator-agnostic constraint-repair stage that brings invalid synthetic rows to 0%, and a canonical-repair control showing that the utility gain from k-NN repair is real-data leakage.",
         links: [
           { label: "Code", href: "https://github.com/nandini1612/hierarchical-synthetic-tabular-data-generation" },
         ],
@@ -363,6 +365,7 @@ const CONTENT = {
     { title: "SheFi Scholar", desc: "Selected for the SheFi program (2025–26)." },
     { title: "1000 Girls, 1000 Futures", desc: "Mentorship program of the New York Academy of Sciences." },
     { title: "Bharatanatyam dancer", desc: "Classical dancer of 10+ years; part of the RAQS college dance team." },
+    { title: "Anchor & off-screen", desc: "I anchor events, make art and craft, read, and volunteer." },
   ],
 
   /* ----------------------------------------------------------- CONTACT ---- */

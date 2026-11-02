@@ -17,6 +17,12 @@
     String(s == null ? "" : s).replace(/[&<>"']/g, (m) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m])
     );
+  // A figure with one image per site theme; CSS shows the one matching data-theme.
+  const themedFigure = (f) => `<figure class="viz">
+      <img class="themed themed--dark" src="${esc(f.dark)}" alt="${esc(f.alt)}" loading="lazy" />
+      <img class="themed themed--light" src="${esc(f.light)}" alt="" aria-hidden="true" loading="lazy" />
+      ${f.caption ? `<figcaption class="viz__cap">${esc(f.caption)}</figcaption>` : ""}
+    </figure>`;
   const bind = (name) => $(`[data-bind="${name}"]`);
 
   /* ------------------------------------------------------------ ICONS --- */
@@ -153,11 +159,12 @@
           .filter(([, v]) => v)
           .map(([k, v]) => `<div class="par"><div class="par__label">${k}</div><div class="par__text">${esc(v)}</div></div>`)
           .join("");
+        const fig = p.figure ? themedFigure(p.figure) : "";
         return `<article class="project reveal" data-project="${i}" data-tags="${esc((p.tags || []).join("|").toLowerCase())}">
           <div class="project__name">${esc(p.name)}</div>
           <p class="project__blurb">${esc(p.blurb)}</p>
           <button class="project__toggle" aria-expanded="false">Read the story ${ICONS.arrow.replace('viewBox="0 0 24 24"','viewBox="0 0 24 24" style="transform:rotate(90deg)"')}</button>
-          <div class="project__detail"><div class="project__detail-inner">${detail}</div></div>
+          <div class="project__detail"><div class="project__detail-inner">${fig}${detail}</div></div>
           <div class="project__foot">
             <div class="tags">${(p.tags || []).map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>
             <div class="project__links">${links}</div>
@@ -430,7 +437,7 @@
     // Navigation
     [
       ["About", "about"], ["Experience", "experience"], ["Projects", "projects"],
-      ["GitHub activity", "github"], ["Interactive demo", "demo"], ["Fraud study", "fraudviz"], ["Skills", "skills"],
+      ["GitHub activity", "github"], ["GPS outage", "demo"], ["Fraud study", "fraudviz"], ["Skills", "skills"],
       ["Papers & preprints", "papers"], ["Writing", "writing"], ["Beyond the code", "beyond"], ["Contact", "contact"],
     ].forEach(([label, id]) =>
       cmds.push({ group: "Navigate", label, hint: "Section", icon: ICONS.hash, run: () => goTo(id) })
@@ -754,105 +761,6 @@
       });
   }
 
-  /* =================== Interactive GPS-drift demo =================== */
-  function wireDemo() {
-    const svg = $("#demoSvg");
-    if (!svg || !(C.demo && C.demo.show)) return;
-    const NS = "http://www.w3.org/2000/svg";
-    const W = 640, H = 360, N = 90;
-    // True path: a smooth curve across the stage.
-    const truePts = [];
-    for (let i = 0; i < N; i++) {
-      const t = i / (N - 1);
-      const x = 50 + t * 540;
-      const y = 180 + Math.sin(t * Math.PI * 1.6) * 70 + Math.sin(t * Math.PI * 4) * 12;
-      truePts.push([x, y]);
-    }
-    // Deterministic pseudo-noise so the drift looks organic but stable.
-    const noise = [];
-    let s = 7;
-    for (let i = 0; i < N; i++) { s = (s * 9301 + 49297) % 233280; noise.push(s / 233280 - 0.5); }
-
-    const outageStart = Math.round(N * 0.32); // GPS lost at ~1/3 in
-    function build(durSec) {
-      const drift = (durSec - 1) / 11;        // 0..1
-      const bad = [], good = [];
-      let cum = 0;
-      for (let i = 0; i < N; i++) {
-        const [x, y] = truePts[i];
-        if (i < outageStart) { bad.push([x, y]); good.push([x, y]); continue; }
-        const k = (i - outageStart) / (N - outageStart); // 0..1 into outage
-        cum += noise[i];
-        // dead-reckoning error grows super-linearly with time & outage length
-        const err = drift * (18 + 150 * k * k);
-        const bx = x + cum * 6 * drift;
-        const by = y + err + cum * 4 * drift;
-        bad.push([bx, by]);
-        // Model keeps ~25% of the deviation (recovers most of the drift) —
-        // illustrative; GateIO measures ~7.5× better than a tuned EKF.
-        good.push([x + (bx - x) * 0.25, y + (by - y) * 0.25]);
-      }
-      return { bad, good };
-    }
-    function rmse(pts) {
-      let sum = 0, n = 0;
-      for (let i = outageStart; i < N; i++) {
-        const dx = pts[i][0] - truePts[i][0], dy = pts[i][1] - truePts[i][1];
-        sum += dx * dx + dy * dy; n++;
-      }
-      return Math.sqrt(sum / n);
-    }
-    const toPath = (pts) => "M" + pts.map((p) => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" L");
-    function line(cls, d, dash) {
-      const p = document.createElementNS(NS, "path");
-      p.setAttribute("d", d); p.setAttribute("fill", "none");
-      p.setAttribute("class", cls); if (dash) p.setAttribute("stroke-dasharray", dash);
-      return p;
-    }
-    const cssVar = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-
-    function draw(durSec) {
-      const { bad, good } = build(durSec);
-      svg.innerHTML = "";
-      // outage region marker
-      const zx = truePts[outageStart][0];
-      const rect = document.createElementNS(NS, "rect");
-      rect.setAttribute("x", zx); rect.setAttribute("y", 8);
-      rect.setAttribute("width", 590 - zx); rect.setAttribute("height", H - 16);
-      rect.setAttribute("fill", cssVar("--accent-soft")); rect.setAttribute("rx", 8);
-      svg.appendChild(rect);
-      const lbl = document.createElementNS(NS, "text");
-      lbl.setAttribute("x", zx + 8); lbl.setAttribute("y", 26);
-      lbl.setAttribute("fill", cssVar("--text-3")); lbl.setAttribute("font-size", "11");
-      lbl.setAttribute("font-family", "monospace"); lbl.textContent = "GPS outage";
-      svg.appendChild(lbl);
-
-      const trueEl = line("", toPath(truePts)); trueEl.setAttribute("stroke", cssVar("--text-3")); trueEl.setAttribute("stroke-width", "2.5"); trueEl.setAttribute("stroke-dasharray", "2 5"); svg.appendChild(trueEl);
-      const badEl = line("", toPath(bad)); badEl.setAttribute("stroke", "#ef6a54"); badEl.setAttribute("stroke-width", "2.5"); svg.appendChild(badEl);
-      const goodEl = line("", toPath(good)); goodEl.setAttribute("stroke", cssVar("--accent")); goodEl.setAttribute("stroke-width", "3"); svg.appendChild(goodEl);
-      // endpoint dots
-      [[bad[N - 1], "#ef6a54"], [good[N - 1], cssVar("--accent")]].forEach(([pt, col]) => {
-        const c = document.createElementNS(NS, "circle");
-        c.setAttribute("cx", pt[0]); c.setAttribute("cy", pt[1]); c.setAttribute("r", 4.5); c.setAttribute("fill", col);
-        svg.appendChild(c);
-      });
-
-      const rb = rmse(bad), rg = rmse(good);
-      const scale = 0.42; // px → "meters" for a believable readout
-      $("#demoRmseBad").textContent = (rb * scale).toFixed(1) + " m";
-      $("#demoRmseGood").textContent = (rg * scale).toFixed(1) + " m";
-      const cut = rb > 0 ? Math.round((1 - rg / rb) * 100) : 0;
-      $("#demoDelta").innerHTML = `Model cuts drift error by <b>~${cut}%</b> across the outage.`;
-      $("#demoDur").textContent = durSec.toFixed(1) + " s";
-    }
-
-    const slider = $("#demoSlider");
-    draw(parseFloat(slider.value));
-    slider.addEventListener("input", () => draw(parseFloat(slider.value)));
-    // redraw on theme change so colors track the scheme
-    $("#themeToggle").addEventListener("click", () => setTimeout(() => draw(parseFloat(slider.value)), 0));
-  }
-
   /* =================== Fraud chart: importance vs contribution ======= */
   function wireFraudViz() {
     const F = C.fraudViz;
@@ -945,7 +853,6 @@
     wireFilter();
     wireVCard();
     wireGitHub();
-    wireDemo();
     wireFraudViz();
     externalizeLinks(); // all http(s) links open in a new tab
   });
